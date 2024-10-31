@@ -1,5 +1,6 @@
 from typing import List, Optional
 
+#! Ne pas oublié de parler de la complexité de cette algorithme Simplexe
 
 # Fonction pour résoudre un problème d'optimisation linéaire Simplexe
 # coef: Coefficients de la fonction objectif
@@ -56,9 +57,33 @@ def simplexe(
     valeur_entrante = max(difference_Cj_Zj)
     colonne_valeur_entrante = difference_Cj_Zj.index(valeur_entrante)
 
+    # Initialisation des variables dans base
+    vdb = ["" for _ in range(len(coef_pivot))]
+    for i in range(len(vdb)):
+        vdb[i] = "x" + str(i + len(coef_pivot) + 1)
+
+    # Initialisation des ratios
+    ratio = [0 for _ in range(len(matrice_coef_bloc_contrainte))]
+
+    # ============== Affichage du tableau Simplexe Initialisation =================
+    display_tab(
+        coef,
+        matrice_coef_bloc_contrainte,
+        vecteurs_Q,
+        coef_pivot,
+        Z,
+        Zj,
+        difference_Cj_Zj,
+        vdb,
+        ratio,
+    )
+    # ===================== Fin de l'affichage =====================
+
     # Calcul de la valeur sortante
     min_value = vecteurs_Q[0] / matrice_coef_bloc_contrainte[0][colonne_valeur_entrante]
     index_min_value = 0
+
+    ratio[0] = vecteurs_Q[0] / matrice_coef_bloc_contrainte[0][colonne_valeur_entrante]
 
     for i in range(1, len(matrice_coef_bloc_contrainte)):
         if (
@@ -70,18 +95,48 @@ def simplexe(
             )
             index_min_value = i
 
+        ratio[i] = (
+            vecteurs_Q[i] / matrice_coef_bloc_contrainte[i][colonne_valeur_entrante]
+        )
+
     coef_pivot[index_min_value] = min_value
-
-    ligne_pivot = matrice_coef_bloc_contrainte[index_min_value]
-
     pivot = matrice_coef_bloc_contrainte[index_min_value][colonne_valeur_entrante]
+    ligne_pivot = [x / pivot for x in matrice_coef_bloc_contrainte[index_min_value]]
 
+    vecteurs_Q[index_min_value] = vecteurs_Q[index_min_value] / pivot
+
+    matrice_coef_bloc_contrainte[index_min_value] = ligne_pivot
+
+    # Calcul des lignes par rapport à la ligne pivot
+    for row in range(len(matrice_coef_bloc_contrainte)):
+        if row != index_min_value:
+            coef_colonne_pivot = matrice_coef_bloc_contrainte[row][colonne_valeur_entrante]
+            print("coef_colonne_pivot", coef_colonne_pivot)
+            print("row de matrice_coef_bloc_contrainte", matrice_coef_bloc_contrainte[row])
+            matrice_coef_bloc_contrainte[row] = [
+                x - coef_colonne_pivot * pivot for x in matrice_coef_bloc_contrainte[row]
+            ]
+            vecteurs_Q[row] = vecteurs_Q[row] - (coef_colonne_pivot * pivot)
+
+    print("ligne pivot", ligne_pivot)
+    print("vecteurs_Q", vecteurs_Q)
+
+    # division par le pivot pour la ligne pivot
+
+    # Calcul de Z
     Z = 0
     for i in range(len(coef_pivot)):
         Z = Z + coef_pivot[i] * vecteurs_Q[i]
 
+    # Calcul pour trouver le nouveau Valeur Dans la Base
+    max_difference_Cj_Zj = max(difference_Cj_Zj)
+    print("Max difference Cj - Zj: ", max_difference_Cj_Zj)
+    index_max_difference_Cj_Zj = difference_Cj_Zj.index(max_difference_Cj_Zj)
+    print("Index max difference Cj - Zj: ", index_max_difference_Cj_Zj)
+
+    vdb[index_min_value] = "x" + str(index_max_difference_Cj_Zj + 1)
+
     # ============== Affichage du tableau Simplexe =================
-    VDB = [0 for _ in range(len(coef_pivot))]
     display_tab(
         coef,
         matrice_coef_bloc_contrainte,
@@ -90,7 +145,8 @@ def simplexe(
         Z,
         Zj,
         difference_Cj_Zj,
-        VDB,
+        vdb,
+        ratio,
     )
     # ===================== Fin de l'affichage =====================
 
@@ -112,22 +168,23 @@ def display_tab(
     Z,
     Zj,
     difference_Cj_Zj,
-    VDB,
+    vdb,
+    ratio,
 ):
     print("=================================================")
     print("Tableau Simplexe")
     print("Cj              |", coef, "| Ratio")
     print("-------------------------------------------------")
     if len(coef_pivot) == 2:
-        print("CP   | VDB | Q  | x1 x2 x3 x4  |")
+        print("CP   | vdb | Q  | x1 x2 x3 x4  |")
     else:
-        print("CP   | VDB | Q  | x1 x2 x3 x4 x5 x6  |")
+        print("CP   | vdb | Q  | x1 x2 x3 x4 x5 x6  |")
     print("-------------------------------------------------")
     for column in range(len(coef_pivot)):
         print(
-            f"{coef_pivot[column]:.2f} | {VDB[column]}   | {vecteurs_Q[column]} | {matrice_sous_contrainte[column]} | todo"
+            f"{coef_pivot[column]:.2f} | {vdb[column]}   | {vecteurs_Q[column]:.1f} | {matrice_sous_contrainte[column]} | {ratio[column]:.2f}"
         )
-    print("Z =", Z, "  | Zj |", Zj)
+    print("Z =", Z, "   | Zj |", Zj)
     print("Cj - Zj         |", difference_Cj_Zj)
 
 
