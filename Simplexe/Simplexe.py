@@ -320,8 +320,12 @@ def calcule_ratios(quantite, colonne_pivot):
     ratio = np.divide(quantite, colonne_pivot).tolist()
     return ratio
 
-def calcule_v_sortante(tab, ratio):
-    index_ligne_valeur_sortante = ratio.index(min(ratio))
+def calcule_v_sortante(tab, ratios):
+    ratios_positifs = [x for x in ratios if x > 0]
+    if ratios_positifs :
+        min_ratio = min(ratios_positifs)
+    
+    index_ligne_valeur_sortante = ratios.index(min_ratio)
     ligne_pivot = tab[index_ligne_valeur_sortante]
     return index_ligne_valeur_sortante, ligne_pivot
 
