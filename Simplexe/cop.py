@@ -288,11 +288,17 @@ def initParam(tab, size_contraintes, objectif):
 
 
 def built_tab_simplex(cp, vdb, quantite, tab, nom_coeff, ratio):
-    df_param = pd.DataFrame({"Cp": cp,"VDB": vdb,"Q": quantite}) #Tables de gauche
+    df_param = pd.DataFrame({"Cp": cp,"VDB": vdb,"Q": quantite,}) #Tables de gauche
     df_coeff = pd.DataFrame(tab, columns=nom_coeff) #Matrice de coefficients
     df_ratio = pd.DataFrame({"ratio": ratio}) #Table de ratios
     return pd.concat([df_param, df_coeff, df_ratio], axis=1)
 
+# totals = pd.DataFrame([Zj], columns=nom_coeff)
+# df = pd.concat([df_param, df_coeff, df_ratio], axis=1)
+# df_final = pd.concat([df, totals], ignore_index=True)
+# df_test = pd.DataFrame([0,0,0,0,0,0,0,0,0,0], columns=df_final.columns)
+# print(df_test.columns)
+# return df_final
 
 # df_tab0 = built_tab_simplex(cp, vdb, quantite, tab, nom_coeff, ratio) 
 
@@ -400,13 +406,21 @@ def simplexe(contraintes, inegalites, quantite):
         while max(Cj_Zj) > 0 and indicate < 5:
             indicate +=1
             # Mise à jour des indicateurs
+            # cp = cp_a_jour(cp, index_ligne_valeur_sortante, index_colonne_valeur_entrante)    
             cp, vdb, quantite, tab, nom_coeff, ligne_pivot = mise_a_jour_ligne_pivot(tab,pivot,index_ligne_valeur_sortante,index_colonne_valeur_entrante,ligne_pivot, nom_coeff, vdb, cp)
             tab = calcule_autre_lignes(tab, colonne_pivot, ligne_pivot, index_ligne_valeur_sortante)
+            # z = z_a_jour(cp, quantite, z)
+            # zj = zj_a_jour(cp, ligne_pivot, index_ligne_valeur_sortante)
             cp = cp_a_jour(cp, index_ligne_valeur_sortante, index_colonne_valeur_entrante)
-            z = z_a_jour(cp, quantite, z)
-           
+            # Cj_Zj = zj_cj_a_jour(objectif, zj)
+            # max_Cj_Zj = max(Cj_Zj)
+            # print("max_Cj_Zj",max_Cj_Zj)
+
             # Calcule du nouveau pivot
+            # index_colonne_valeur_entrante, colonne_pivot = calcule_v_entrante(tab, max_Cj_Zj, Cj_Zj) # Valeur entrante
+            # ratio = calcule_ratios(quantite, colonne_pivot) # On calcule les ratios
             index_ligne_valeur_sortante, ligne_pivot = calcule_v_sortante(tab, ratio) # Valeur sortante
+            z = z_a_jour(cp, quantite, z)
             zj = zj_a_jour(cp, ligne_pivot, index_ligne_valeur_sortante)
             Cj_Zj = zj_cj_a_jour(objectif, zj)
             max_Cj_Zj = max(Cj_Zj)
@@ -419,7 +433,7 @@ def simplexe(contraintes, inegalites, quantite):
             print("Valeur entrante =", nom_coeff[index_colonne_valeur_entrante])
             print("Valeur sortante =", vdb[index_ligne_valeur_sortante])
             print("Pivot =", pivot)  
-            df_tab0 = built_tab_simplex(cp,vdb, quantite, tab, nom_coeff, ratio)  # Construction du tableau simplex
+            df_tab0 = built_tab_simplex(cp, vdb, quantite, tab, nom_coeff, ratio)
             if max(Cj_Zj) > 0 : 
                 print_tab_simplex(z,df_tab0, "Itération " + str(indicate), zj, Cj_Zj)
             else :
