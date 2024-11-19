@@ -224,6 +224,14 @@ import pandas as pd
 # Luc
 #  A faire tant que les coefficients de la fonction objectif sont strictement positif
 
+# # Coeff fonction objectif :
+# objectif = [7,6]
+# # Coeff contraintes :
+# contraintes = [[2, 4],
+#  [3, 2],]
+# # Quantité :
+# quantite = [16, 12]
+
 # Coeff fonction objectif :
 objectif = [4, 5, 6]
 # Coeff contraintes :
@@ -317,6 +325,7 @@ def calcule_v_entrante(tab, max_Cj_Zj, Cj_Zj):
 # Etape 4 : Choisir la variable à enlever de la base
 
 def calcule_ratios(quantite, colonne_pivot):
+    np.seterr(divide='ignore', invalid='ignore') #Pour ignorer warning quand division par zéro
     ratio = np.divide(quantite, colonne_pivot).tolist()
     return ratio
 
@@ -354,14 +363,18 @@ def cp_a_jour(cp, index_ligne_valeur_sortante, index_colonne_valeur_entrante):
     return cp
 
 def z_a_jour(cp, q, z):
+    z = 0
     for i in range(len(cp)):
-        # print(cp[i], "x", q[i], "=", cp[i] * q[i] )
         z += cp[i] * q[i]
-    # print("Z =", z)
     return z
 
-def zj_a_jour(cp, ligne_pivot, index_ligne_valeur_sortante):
-    return [x * cp[index_ligne_valeur_sortante] for x in ligne_pivot]
+def zj_a_jour(cp,tab,Zj, index_ligne_valeur_sortante):
+    for i in range(len(tab[index_ligne_valeur_sortante])):
+        Zj[i] = 0
+        for j in range(len(cp)):
+            Zj[i] += cp[j] * tab[j][i]
+            # print(cp[j], "x", tab[j][i])
+    return Zj
 
 def zj_cj_a_jour(cj, zj):
     return np.subtract(cj, zj).tolist()
@@ -373,7 +386,9 @@ def calcule_autre_lignes(tab, colonne_pivot, ligne_pivot, index_ligne_valeur_sor
         if index_ligne != index_ligne_valeur_sortante:
             for index_colonne in range(len(tab[index_ligne])):
                 tab[index_ligne][index_colonne] = tab[index_ligne][index_colonne] - colonne_pivot[index_ligne] * ligne_pivot[index_colonne] 
+                # print( tab[index_ligne][index_colonne] ,"-", colonne_pivot[index_ligne] ,"*", ligne_pivot[index_colonne] )
             quantite[index_ligne] = quantite[index_ligne] - colonne_pivot[index_ligne] * quantite[index_ligne_valeur_sortante]  
+            # print(quantite[index_ligne], "-",colonne_pivot[index_ligne], "x",quantite[index_ligne_valeur_sortante] )
     return tab
 
 # tab = calcule_autre_lignes(tab, colonne_pivot, ligne_pivot, index_ligne_valeur_sortante)
@@ -401,7 +416,7 @@ def simplexe(contraintes, inegalites, quantite):
 # Bug : La colonne pivot ne change pas ici elle reste la meme le max Zj-CJ n'est pas changé
     if max(Cj_Zj) > 0 :
         indicate = 0
-        while max(Cj_Zj) > 0 and indicate < 5:
+        while max(Cj_Zj) > 0:
             indicate +=1
             # Mise à jour des indicateurs
             cp, vdb, quantite, tab, nom_coeff, ligne_pivot = mise_a_jour_ligne_pivot(tab,pivot,index_ligne_valeur_sortante,index_colonne_valeur_entrante,ligne_pivot, nom_coeff, vdb, cp)
@@ -411,23 +426,24 @@ def simplexe(contraintes, inegalites, quantite):
            
             # Calcule du nouveau pivot
             index_ligne_valeur_sortante, ligne_pivot = calcule_v_sortante(tab, ratio) # Valeur sortante
-            zj = zj_a_jour(cp, ligne_pivot, index_ligne_valeur_sortante)
+            zj = zj_a_jour(cp,tab,zj, index_ligne_valeur_sortante)
             Cj_Zj = zj_cj_a_jour(objectif, zj)
             max_Cj_Zj = max(Cj_Zj)
             index_colonne_valeur_entrante, colonne_pivot = calcule_v_entrante(tab, max_Cj_Zj, Cj_Zj) # Valeur entrante
             ratio = calcule_ratios(quantite, colonne_pivot) # On calcule les ratios
             index_ligne_valeur_sortante, ligne_pivot = calcule_v_sortante(tab, ratio) # Valeur sortante
+            pivot = calcule_pivot(tab, index_ligne_valeur_sortante, index_colonne_valeur_entrante) # On détermine le pivot
 
-
-            print("Max Cj-Zj =", max_Cj_Zj)
-            print("Valeur entrante =", nom_coeff[index_colonne_valeur_entrante])
-            print("Valeur sortante =", vdb[index_ligne_valeur_sortante])
-            print("Pivot =", pivot)  
+            if max_Cj_Zj > 0 :
+                print("Max Cj-Zj =", max_Cj_Zj)
+                print("Valeur entrante =", nom_coeff[index_colonne_valeur_entrante])
+                print("Valeur sortante =", vdb[index_ligne_valeur_sortante])
+                print("Pivot =", pivot)  
             df_tab0 = built_tab_simplex(cp,vdb, quantite, tab, nom_coeff, ratio)  # Construction du tableau simplex
             if max(Cj_Zj) > 0 : 
                 print_tab_simplex(z,df_tab0, "Itération " + str(indicate), zj, Cj_Zj)
             else :
-                print_tab_simplex(z,df_tab0, "Tableau Final" + str(indicate), zj, Cj_Zj)
+                print_tab_simplex(z,df_tab0, "Tableau Final", zj, Cj_Zj)
 
 
 
