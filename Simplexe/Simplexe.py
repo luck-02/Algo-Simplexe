@@ -1,7 +1,5 @@
 import numpy as np
 import pandas as pd
-# Luc
-#  A faire tant que les coefficients de la fonction objectif sont strictement positif
 
 # # Coeff fonction objectif :
 # objectif = [7,6]
